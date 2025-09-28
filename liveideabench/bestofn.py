@@ -22,7 +22,7 @@ model = AutoModelForCausalLM.from_pretrained(
     torch_dtype="auto"    # Use the best dtype (like float16 on GPU)
 )
 
-file_path = "/home/ly/liveideabench/keywords_data/keywordsEverywhere20241216.xlsx"
+file_path = "liveideabench/keywords_data/keywordsEverywhere20241216.xlsx"
 
 # Read Excel file, use the second row (index 1) as header
 df = pd.read_excel(file_path, header=1)

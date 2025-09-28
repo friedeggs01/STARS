@@ -49,12 +49,6 @@ def apply_steering_hook_pre(model, tokenizer, recalc_steer_after_n_tokens: int =
     input_ids = None
     token_cnt = 0
     v_steering = None
-    
-    # def get_input_ids_hook(module, input, output):
-    #     nonlocal input_ids
-    #     # input_ids.shape = [batch size, token length so far]
-    #     input_ids = torch.cat((input_ids, input[0].detach().clone()), dim=1) if input_ids is not None else input[0].detach().clone()
-    #     # print("Appended tokens:", input_ids[0].tolist())
 
     def steering_hook(module, input):
         nonlocal token_cnt, v_steering, input_ids, tokenizer
@@ -65,13 +59,9 @@ def apply_steering_hook_pre(model, tokenizer, recalc_steer_after_n_tokens: int =
         else:
             input_tensor = input
             other_inputs = ()
-        # breakpoint()
-        # print("Recalc check:", (token_cnt - 2) % recalc_steer_after_n_tokens == 0, token_cnt == 2)
+
         if (token_cnt - 2) % recalc_steer_after_n_tokens == 0 or token_cnt == 2:
-            # print(f"Recalculating steering vector at token {token_cnt}")
-            # h_last_np = input_tensor[:, -1, :].detach().to(torch.float32).cpu().numpy()
             h_last_np = input_tensor[:, -1, :].detach().to(torch.float32)
-            # v_steering, obj_history, grad_norm_history, total_time, step_size_history = profiled_riemannian_descent(h_last_np)
             v_steering = svd_one_step(h_last_np)
             v_steering = torch.tensor(v_steering, dtype=input_tensor.dtype, device=input_tensor.device)
       
@@ -83,7 +73,6 @@ def apply_steering_hook_pre(model, tokenizer, recalc_steer_after_n_tokens: int =
             return input_tensor
 
     steering_handle = model.model.layers[steer_at_layer].self_attn.o_proj.register_forward_pre_hook(steering_hook)
-    # breakpoint()
     
     return steering_handle
 
@@ -95,7 +84,7 @@ model = AutoModelForCausalLM.from_pretrained(
     torch_dtype="auto"    # Use the best dtype (like float16 on GPU)
 )
 
-file_path = "/home/ly/liveideabench/keywords_data/keywordsEverywhere20241216.xlsx"
+file_path = "liveideabench/keywords_data/keywordsEverywhere20241216.xlsx"
 
 # Read Excel file, use the second row (index 1) as header
 df = pd.read_excel(file_path, header=1)
@@ -121,7 +110,6 @@ for keyword in tqdm(df['Keyword'][:118]):
     }
 
     prompt = idea_prompt['description'] + "\n\nYou MUST give your answer after **Final Idea:**"
-    # print("Prompt:", prompt)
     
     messages = [{"role": "user", "content": prompt}]
     
@@ -148,9 +136,6 @@ for keyword in tqdm(df['Keyword'][:118]):
     for i in range(outputs.shape[0]):
         generated_text = tokenizer.decode(outputs[i][inputs["input_ids"].shape[-1]:])
         responses.append(generated_text)
-        # print(f"--- Response {i+1} ---")
-        # print(generated_text)
-        # print("\n")
     
     # Add to dictionary
     keyword_responses[keyword] = responses
