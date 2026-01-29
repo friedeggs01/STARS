@@ -36,8 +36,8 @@ Located in the `liveideabench/` directory.
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/your-username/STAR-ICLR26.git
-cd STAR-ICLR26
+git clone https://github.com/lythk88/STARS
+cd STARS
 pip install -r requirements.txt
 ```
 
